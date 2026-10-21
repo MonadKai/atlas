@@ -1,0 +1,160 @@
+{
+  "schema_version": "atlas-private-build-profile-v1",
+  "profile": "gb10-arm64-qwen36-nvfp4-cuda130-native-development",
+  "rust_version": "1.93.1",
+  "cuda_version": "13.0.88",
+  "libclang_path": "/usr/lib/llvm-18/lib",
+  "build_jobs": 4,
+  "runtime_base": "ubuntu:24.04@sha256:b35f8c42edf2f1c13abcb5434d8c2034a3f174a517cf0ca71ff3a1acb8a23640",
+  "tools": {
+    "rustc": {
+      "root": "rust",
+      "path": "bin/rustc",
+      "size_bytes": 2319952,
+      "sha256": "0dda59ecc41f9ffceb327a6c7638101ca1b33ea5ae45b6f07440f0dbe51b1f15"
+    },
+    "cargo": {
+      "root": "rust",
+      "path": "bin/cargo",
+      "size_bytes": 39147144,
+      "sha256": "ee638b223e9d1a954ac9968a69dea996a3a74ddc90ff720b23167fe3762b968b"
+    },
+    "nvcc": {
+      "root": "cuda",
+      "path": "bin/nvcc",
+      "size_bytes": 24513032,
+      "sha256": "fbb111f057786ddd10ba723d993cc7dd43abf978b6baa32fedd3c9d806dc79e1"
+    },
+    "gcc": {
+      "path": "/usr/bin/gcc",
+      "size_bytes": 990040,
+      "sha256": "dc21472a2f0865001620971accab1bc5838774c668d7d7443bffdaa6929f3450"
+    },
+    "g++": {
+      "path": "/usr/bin/g++",
+      "size_bytes": 990040,
+      "sha256": "5c84d1b6d35aae9e125a08c8e97fdae406734545d78405002333227aee1ac081"
+    },
+    "ar": {
+      "path": "/usr/bin/ar",
+      "size_bytes": 67824,
+      "sha256": "f4583a612510e038dbc1ae8afb5eae5f0445c435bdd7c4c28e78acc7e757d2b1"
+    },
+    "cmake": {
+      "path": "/usr/bin/cmake",
+      "size_bytes": 10489912,
+      "sha256": "05e8a03ddf5a5075139760bcf4fc5bb73112246c5cd796dc85854589cfa502cb"
+    },
+    "libclang": {
+      "path": "/usr/lib/llvm-18/lib/libclang.so.1",
+      "size_bytes": 34637080,
+      "sha256": "be2902f406fd2f64bd665e0675620b4fabfdaa3fabddb1553ef531c80d3cb0a4"
+    }
+  },
+  "input_trees": {
+    "rust-native-toolchain": {
+      "root": "rust",
+      "path": "."
+    },
+    "cuda-compiler-tools": {
+      "root": "cuda",
+      "path": "bin"
+    },
+    "cuda-nvvm": {
+      "root": "cuda",
+      "path": "nvvm"
+    },
+    "cuda-headers": {
+      "root": "cuda",
+      "path": "targets/sbsa-linux/include"
+    },
+    "host-gcc-native": {
+      "path": "/usr/lib/gcc/aarch64-linux-gnu/13"
+    },
+    "host-headers": {
+      "path": "/usr/include"
+    }
+  },
+  "runtime_libraries": [
+    {
+      "soname": "libibverbs.so.1",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libibverbs.so.1.14.50.0",
+      "size_bytes": 199216,
+      "sha256": "84e987a9131e90bf7933614bf2f415ea0e928d5614328685461cf646cdb384e4"
+    },
+    {
+      "soname": "libnccl.so.2",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libnccl.so.2.28.9",
+      "size_bytes": 189958896,
+      "sha256": "0f57fd98c75e56c5cb2a6fb36b4af44c5ccb6a4d7c6c0df10292652c6742bfee"
+    },
+    {
+      "soname": "libcublasLt.so.13",
+      "host_path": "/usr/local/cuda-13.0/targets/sbsa-linux/lib/libcublasLt.so.13.1.0.3",
+      "size_bytes": 629929568,
+      "sha256": "3839e12c3b69ed8eb732e5d5f8e749403a582a9d706f779017c785152d9e62f9"
+    },
+    {
+      "soname": "libcudart.so.13",
+      "host_path": "/usr/local/cuda-13.0/targets/sbsa-linux/lib/libcudart.so.13.0.96",
+      "size_bytes": 707752,
+      "sha256": "7bdba2b5b08cbdc85203c41cc94598adedb1bcfea7cb574ca693ac73599e4e63"
+    },
+    {
+      "soname": "libgcc_s.so.1",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libgcc_s.so.1",
+      "size_bytes": 133696,
+      "sha256": "f2d3ad2bf0b61f6bc944cc37d7b6ab7f88d2582b41ff989ca164803f56cc5f20"
+    },
+    {
+      "soname": "libnl-route-3.so.200",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libnl-route-3.so.200.26.0",
+      "size_bytes": 609672,
+      "sha256": "25b0138e696273db55d4c0eec19335841311cbde995d50caeef9c853c835f5c8"
+    },
+    {
+      "soname": "libnl-3.so.200",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libnl-3.so.200.26.0",
+      "size_bytes": 199232,
+      "sha256": "a4e331c8189a300460ef3da8c3fc6e58e46787ce028775a93dd772514bfa1f89"
+    },
+    {
+      "soname": "libstdc++.so.6",
+      "host_path": "/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.33",
+      "size_bytes": 2633224,
+      "sha256": "6e3112d35cfc86db7ee85b27e1746f67408e2837ff8628b46386c3eabd5682a4"
+    }
+  ],
+  "source_inputs": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+    "crates",
+    "vendor",
+    "kernels",
+    "jinja-templates",
+    "tests/fixtures",
+    "3rdparty_patches",
+    "deploy/release/build.py",
+    "deploy/release/build_profile.json",
+    "docker/gb10/Dockerfile.private-runtime"
+  ],
+  "kernel_closure": {
+    "gb10/qwen3.6-35b-a3b/nvfp4": {
+      "hash": "c44091f3f30a18678a1124faa63f431a3a69951c75cd1e81cf334b5a16230c1c",
+      "arch": "sm_121f",
+      "compiler": "Build cuda_13.0.r13.0/compiler.36424714_0",
+      "flags": [
+        "--fmad=false",
+        "-DTQ_PLUS_SIGNS"
+      ]
+    }
+  },
+  "notices": {
+    "cuda-EULA.txt": "/usr/local/cuda-13.0/EULA.txt",
+    "nccl-copyright": "/usr/share/doc/libnccl2/copyright",
+    "ibverbs-copyright": "/usr/share/doc/libibverbs1/copyright",
+    "libnl-copyright": "/usr/share/doc/libnl-3-200/copyright",
+    "gcc-copyright": "/usr/share/doc/libstdc++6/copyright"
+  }
+}
