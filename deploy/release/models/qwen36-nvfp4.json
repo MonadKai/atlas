@@ -1,0 +1,112 @@
+{
+  "hf_model": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+  "hf_revision": "1355db6a052410cfd62085d94b58866fd0f2c3c5",
+  "download_mirror": "nv-community/Qwen3.6-35B-A3B-NVFP4",
+  "mirror_revision": "master; content pinned by SHA-256",
+  "schema_version": "atlas-model-assets-v1",
+  "model_family": "Qwen3.6-35B-A3B",
+  "quantization": "NVFP4",
+  "license": {
+    "authorization": "confirmed by operator; no additional permission requested",
+    "model_card": "README.md",
+    "terms": "Consumers remain responsible for compliance with the model card and applicable model license."
+  },
+  "files": {
+    ".gitattributes": {
+      "size_bytes": 2403,
+      "sha256": "sha256:95b104bba40fa0bf4efebbe523e8cb93ecba61293ef99574f7bb740e482d2d85"
+    },
+    "README.md": {
+      "size_bytes": 9936,
+      "sha256": "sha256:1ee59fc444f6935222966d9336d1b37c7a1f3bb237ad4a09793ecaa9b462e2ad"
+    },
+    "chat_template.jinja": {
+      "size_bytes": 7764,
+      "sha256": "sha256:e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"
+    },
+    "config.json": {
+      "size_bytes": 58110,
+      "sha256": "sha256:58aefa1c9eff7989f431d748f2ddec39446cb1fd2a69acc46e285c6a37b0cecc"
+    },
+    "configuration.json": {
+      "size_bytes": 58,
+      "sha256": "sha256:c1b09db419119513247e9b8b912c4b9897106c9b20c6cada7e107d993c5435eb"
+    },
+    "generation_config.json": {
+      "size_bytes": 202,
+      "sha256": "sha256:e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e"
+    },
+    "hf_quant_config.json": {
+      "size_bytes": 35085,
+      "sha256": "sha256:75fe7cc8d5836b58734e05ee67423a4ce91d602aaad45c8173a1b7597cd57663"
+    },
+    "model-00001-of-00003.safetensors": {
+      "size_bytes": 10006877608,
+      "sha256": "sha256:07141c2db92e47bc08777132cd1a0323faf300eab3a7d7c111bc2bf075fda050"
+    },
+    "model-00002-of-00003.safetensors": {
+      "size_bytes": 10003595752,
+      "sha256": "sha256:6dea9c759a0f941cf9e1cc1501216b0e107966a66c90425050e212efbd053f02"
+    },
+    "model-00003-of-00003.safetensors": {
+      "size_bytes": 3413864960,
+      "sha256": "sha256:9758875fc55e49561165f4a44342b654c123c3e25c6811b34abb83553fb1a164"
+    },
+    "model.safetensors.index.json": {
+      "size_bytes": 13726227,
+      "sha256": "sha256:d67403a4e9793c0ba8a136baf14b3b76ec7b32c822267978084895e07ebd8a3e"
+    },
+    "preprocessor_config.json": {
+      "size_bytes": 390,
+      "sha256": "sha256:27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+    },
+    "tokenizer.json": {
+      "size_bytes": 12807982,
+      "sha256": "sha256:5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+    },
+    "tokenizer_config.json": {
+      "size_bytes": 16718,
+      "sha256": "sha256:5186f0defcd7f232382c7f0aebcd2252d073bb921ab240e407b7ae8745d2b29b"
+    },
+    "video_preprocessor_config.json": {
+      "size_bytes": 385,
+      "sha256": "sha256:7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13"
+    },
+    "vocab.json": {
+      "size_bytes": 6722759,
+      "sha256": "sha256:ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+    }
+  },
+  "safetensors_index": "model.safetensors.index.json",
+  "mtp": {
+    "tensor_count": 19,
+    "tensor_keys": [
+      "mtp.fc.weight",
+      "mtp.layers.0.input_layernorm.weight",
+      "mtp.layers.0.mlp.experts.down_proj",
+      "mtp.layers.0.mlp.experts.gate_up_proj",
+      "mtp.layers.0.mlp.gate.weight",
+      "mtp.layers.0.mlp.shared_expert.down_proj.weight",
+      "mtp.layers.0.mlp.shared_expert.gate_proj.weight",
+      "mtp.layers.0.mlp.shared_expert.up_proj.weight",
+      "mtp.layers.0.mlp.shared_expert_gate.weight",
+      "mtp.layers.0.post_attention_layernorm.weight",
+      "mtp.layers.0.self_attn.k_norm.weight",
+      "mtp.layers.0.self_attn.k_proj.weight",
+      "mtp.layers.0.self_attn.o_proj.weight",
+      "mtp.layers.0.self_attn.q_norm.weight",
+      "mtp.layers.0.self_attn.q_proj.weight",
+      "mtp.layers.0.self_attn.v_proj.weight",
+      "mtp.norm.weight",
+      "mtp.pre_fc_norm_embedding.weight",
+      "mtp.pre_fc_norm_hidden.weight"
+    ],
+    "location": "main safetensors shard(s), not a separate extra_weights directory",
+    "execution": "auto-gated; structural presence does not prove inference execution"
+  },
+  "provenance_unverified": {
+    "cloud_object_identity": "NOT_VERIFIED_THIS_ROUND",
+    "upstream_to_cloud_to_local_source_chain": "NOT_VERIFIED_THIS_ROUND",
+    "local_sha256_claim": "byte consistency only; not source authentication"
+  }
+}

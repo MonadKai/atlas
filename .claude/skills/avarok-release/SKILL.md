@@ -13,6 +13,20 @@ host and drifts weeks behind `main` because nothing rebuilds/re-verifies/re-tags
 This skill makes each stage explicit, gated, and reproducible so a new image can
 ship in minutes with proof it works.
 
+## Explicit private GB10 development route
+
+For an explicitly authorized **MonadKai/atlas fork and private registry** delivery
+of GB10 ARM64 Qwen3.6-35B-A3B-NVFP4, read
+[private-gb10](references/private-gb10.md) instead of invoking the public publish
+or sync-pr operations below. This limited route has its own fixed build inputs,
+closed product bundle and matching acceptance; it never changes the upstream
+repository, public image tags or full-model qualification. Independent deployment
+from that bundle is described by [atlas-private-deploy](../atlas-private-deploy/SKILL.md).
+
+The stages, all-model serve gate, human-controlled public shipping and sync-pr
+rules below remain the public/upstream workflow. Private development acceptance
+does not authorize that workflow or certify its full matrix.
+
 Four stages, each gates the next. **A stage's output is only valid if the prior
 stage passed its written bar.**
 

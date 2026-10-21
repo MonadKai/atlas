@@ -41,6 +41,14 @@ Architecture decision records live in `docs/adr/`; the benchmark journey in
   [`docs/GB10_DEPLOYMENT_GUIDE.md`](docs/GB10_DEPLOYMENT_GUIDE.md) §2; the
   per-model kernel registry is `kernels/gb10/<model>/MODEL.toml`.
 
+## Private GB10 release and consumption
+
+For explicitly authorized delivery from the MonadKai fork to a private registry,
+use [avarok-release private-gb10](.claude/skills/avarok-release/references/private-gb10.md)
+and [atlas-private-deploy](.claude/skills/atlas-private-deploy/SKILL.md).
+These scoped development paths preserve the public workflow and its qualification
+gates; they neither sync nor write to upstream.
+
 ## Local checks before a PR
 
 The commands CI will run:
