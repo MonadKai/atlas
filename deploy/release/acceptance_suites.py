@@ -50,7 +50,7 @@ def public(client, model, cases):
     models = client.json("/v1/models")
     require(any(row.get("id") == model for row in models.get("data", [])), "model alias absent")
     before_metrics = metrics(client)
-    before = metric(before_metrics, "atlas_decoded_tokens_total")
+    before = metric(before_metrics, "atlas_decoded_tokens_total", missing_zero=True)
     rows = []
     for case in cases["public"]:
         body = client.json("/v1/chat/completions", chat_payload(model, case["prompt"]))
@@ -61,11 +61,11 @@ def public(client, model, cases):
     body = client.json("/v1/chat/completions", payload)
     rows.append(validate_tool(body, model, tool["name"], tool["arguments"]))
     after_metrics = metrics(client)
-    decoded = metric(after_metrics, "atlas_decoded_tokens_total") - before
+    decoded = metric(after_metrics, "atlas_decoded_tokens_total", missing_zero=True) - before
     work = validate_completed_work(sum(row["usage"]["completion"] for row in rows),
-                                   metric(before_metrics, "atlas_generation_tokens_total"),
+                                   metric(before_metrics, "atlas_generation_tokens_total", missing_zero=True),
                                    metric(after_metrics, "atlas_generation_tokens_total"), len(rows),
-                                   metric(before_metrics, "atlas_requests_total"),
+                                   metric(before_metrics, "atlas_requests_total", missing_zero=True),
                                    metric(after_metrics, "atlas_requests_total"))
     require(metric(after_metrics, "atlas_kernel_lookups_unresolved") == 0,
             "unresolved kernel dispatch detected")
@@ -119,7 +119,7 @@ def cache(client, model, cases):
                                len(filler), cases["cache_target_input"], 16)
     # Both requests preserve the complete prefix; only the final key differs.
     texts = [text, text.replace("for key ALPHA.", "for key BETA."), text]
-    before = metric(metrics(client), "atlas_prefix_cache_hit_tokens_total")
+    before = metric(metrics(client), "atlas_prefix_cache_hit_tokens_total", missing_zero=True)
     rows = [client.json("/v1/chat/completions", chat_payload(model, text)) for text in texts]
     after = metric(metrics(client), "atlas_prefix_cache_hit_tokens_total")
     result = validate_cache(rows, model, cases["cache_codes"], before, after)

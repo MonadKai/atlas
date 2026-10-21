@@ -198,6 +198,37 @@ class OtherEvidence(unittest.TestCase):
             with self.assertRaises(ValueError):
                 metric(text, "x")
 
+    def test_fresh_exporter_unregistered_work_counters_have_explicit_zero_baseline(self):
+        # Real first cold-exporter shape: no chat handler has registered these
+        # lazy_static counters yet; static prefix/kernel metrics already exist.
+        fresh = ("# HELP atlas_http_bytes_out_total Total HTTP response body bytes\n"
+                 "# TYPE atlas_http_bytes_out_total counter\natlas_http_bytes_out_total 269\n"
+                 "atlas_prefix_cache_hit_tokens_total 0\natlas_kernel_lookups_unresolved 0\n")
+        before_tokens = metric(fresh, "atlas_generation_tokens_total", missing_zero=True)
+        before_requests = metric(fresh, "atlas_requests_total", missing_zero=True)
+        self.assertEqual(metric(fresh, "atlas_decoded_tokens_total", missing_zero=True), 0)
+        self.assertEqual(validate_completed_work(36, before_tokens, 36, 4, before_requests, 4)
+                         ["generation_tokens_delta"], 36)
+        # After actual requests the completed counters must really be present.
+        for name in ["atlas_generation_tokens_total", "atlas_requests_total"]:
+            with self.assertRaises(ValueError):
+                metric(fresh, name)
+
+    def test_optional_zero_is_whitelisted_and_never_hides_invalid_or_duplicate(self):
+        for text, name in [("", "atlas_requests_active"), ("", "unknown_counter"),
+                           ("atlas_generation_tokens_total nan\n", "atlas_generation_tokens_total"),
+                           ("atlas_generation_tokens_total\n", "atlas_generation_tokens_total"),
+                           ('atlas_generation_tokens_total{unexpected="label"} 2\n', "atlas_generation_tokens_total"),
+                           ("atlas_generation_tokens_total 1\natlas_generation_tokens_total 2\n",
+                            "atlas_generation_tokens_total")]:
+            with self.subTest(text=text, name=name), self.assertRaises(ValueError):
+                metric(text, name, missing_zero=True)
+
+    def test_cache_missing_zero_applies_only_to_explicit_initial_lookup(self):
+        self.assertEqual(metric("", "atlas_prefix_cache_hit_tokens_total", missing_zero=True), 0)
+        with self.assertRaises(ValueError):
+            metric("", "atlas_prefix_cache_hit_tokens_total")
+
     def test_native_logs_never_convert_visibility_to_execution(self):
         result = native_log_evidence("GPU visible; serving; speculative decoding enabled")
         self.assertEqual(result["gpu_kernel_execution"], "NOT_RUN")

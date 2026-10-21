@@ -185,9 +185,24 @@ def validate_completed_work(tokens, generation_before, generation_after,
             "scope": "synchronous completed blocking-handler counters; not GPU kernel proof"}
 
 
-def metric(text, name):
+ZERO_BASELINE_COUNTERS = frozenset({
+    "atlas_decoded_tokens_total", "atlas_generation_tokens_total",
+    "atlas_requests_total", "atlas_prefix_cache_hit_tokens_total",
+})
+
+
+def metric(text, name, *, missing_zero=False):
+    """Known work counters may be unregistered until their first use.
+
+    Callers must opt in only for initial baselines or the streaming-only
+    decoded observation on a blocking path. Post-work mandatory counters and
+    all gauges stay strict. Invalid or duplicate samples never become zero.
+    """
     rows = re.findall(r"^" + re.escape(name) + r" ([^\s]+)(?:[ \t].*)?$", text, re.M)
-    require(len(rows) == 1, f"missing/duplicate metric {name}")
+    samples = re.findall(r"^" + re.escape(name) + r"(?=[ \t{]|$).*$", text, re.M)
+    if not samples and missing_zero and name in ZERO_BASELINE_COUNTERS:
+        return 0.0
+    require(len(rows) == len(samples) == 1, f"missing/duplicate/invalid metric {name}")
     value = float(rows[0])
     require(math.isfinite(value) and value >= 0, f"invalid metric {name}")
     return value
