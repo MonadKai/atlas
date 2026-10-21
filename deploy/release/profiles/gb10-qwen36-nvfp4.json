@@ -1,0 +1,244 @@
+{
+  "schema_version": "product-deployment-capability-v2",
+  "product_ref": "product:atlas-qwen36-nvfp4",
+  "profiles": [
+    {
+      "profile_id": "gb10-qwen36-nvfp4-cu130-development",
+      "execution_plane": "docker",
+      "architecture": "arm64",
+      "accelerator_backend": "nvidia-cuda",
+      "allocation_mode": "shared",
+      "memory_topology": "unified"
+    }
+  ],
+  "allowed_exposure": [
+    "loopback"
+  ],
+  "required_gates": [
+    "target-access-ready",
+    "runtime-compatible",
+    "artifact-available",
+    "capacity-admitted",
+    "network-admitted",
+    "accelerator-admitted"
+  ],
+  "service": {
+    "protocol": "http",
+    "path": "/v1/chat/completions",
+    "container_port": 8888,
+    "probes": {
+      "readiness": {
+        "kind": "http",
+        "path": "/health"
+      },
+      "acceptance": {
+        "kind": "release-bound",
+        "entry": "toolkit.py verify"
+      }
+    }
+  },
+  "runtime": {
+    "deployment_protocol": "service-docker-v3",
+    "admission_scope": "development",
+    "instance_schema_version": "service-instance-v5",
+    "contract_version": "atlas-gb10-qwen36-runtime-v1",
+    "protocol_version": "atlas-openai-qwen36-v1",
+    "api_component": "engine",
+    "minimum_resources": {
+      "engine": {
+        "cpu_limit_millicores": 4000,
+        "memory_limit_bytes": 68719476736
+      }
+    },
+    "required_assets": [
+      "qwen36"
+    ],
+    "host_requirements": {
+      "architecture": "aarch64",
+      "gpu": "NVIDIA GB10 sm_121",
+      "memory_topology": "unified",
+      "driver": "CUDA13.0 compatible; actual driver/runtime checked before admission"
+    },
+    "startup_order": [
+      "model assets verified before creation",
+      "wait for actual model health and public inference"
+    ],
+    "shutdown": "SIGTERM: close new TCP accept; drain active requests for existing hardcoded15s; declared120s container grace. Does not promise keepalive rejection or persisted prefix cache.",
+    "predeploy_checks": [
+      {
+        "entry": "toolkit.py verify-assets",
+        "scope": "all16 fixed model sizes/SHA and MTP safetensor header/index validation"
+      }
+    ],
+    "acceptance": {
+      "client": "acceptance.py",
+      "plan": "fixtures/cases.json",
+      "scope": "bounded functional/protocol; performance/stability/business accuracy NOT_RUN; production not_qualified"
+    },
+    "settings": {
+      "context_length": 32768,
+      "prefix_cache": true,
+      "moe_layout": "fast",
+      "kv_dtype": "bf16",
+      "turboquant": false,
+      "max_prefill_tokens": 4096,
+      "engine_budget_gib": 52,
+      "capacity_reservation_gib": 54,
+      "container_limit_gib": 64,
+      "mtp_gate": "auto",
+      "mtp_execution_evidence": "actual execution recorded separately; configuration does not prove execution",
+      "moe_layout_binding": "source default moe_lowmem=false; no --moe-lowmem flag"
+    },
+    "compose": {
+      "services": {
+        "engine": {
+          "image": "${image:engine}",
+          "platform": "linux/arm64",
+          "entrypoint": [
+            "/usr/local/bin/spark"
+          ],
+          "command": [
+            "serve",
+            "--model-from-path",
+            "/models/qwen36",
+            "--model-name",
+            "${instance:model_alias}",
+            "--kernel-target",
+            "qwen3.6-35b-a3b",
+            "--bind",
+            "0.0.0.0",
+            "--port",
+            "8888",
+            "--max-seq-len",
+            "32768",
+            "--max-batch-size",
+            "1",
+            "--max-num-seqs",
+            "2",
+            "--max-prefill-tokens",
+            "4096",
+            "--gpu-memory-utilization",
+            "0.434428322705555",
+            "--kv-cache-dtype",
+            "bf16",
+            "--kv-high-precision-layers",
+            "0",
+            "--lm-head-dtype",
+            "default",
+            "--ssm-cache-slots",
+            "8",
+            "--ssm-checkpoint-interval",
+            "512",
+            "--oom-guard-mb",
+            "2048",
+            "--scheduling-policy",
+            "fifo",
+            "--enable-prefix-caching",
+            "true",
+            "--tool-call-parser",
+            "qwen3_coder",
+            "--disable-tool-grammar",
+            "true",
+            "--disable-thinking",
+            "--no-tui",
+            "--swap-space-gb",
+            "0",
+            "--speculative",
+            "--num-drafts",
+            "1",
+            "--mtp-quantization",
+            "bf16",
+            "--mtp-vocab",
+            "0",
+            "--mtp-gate",
+            "auto"
+          ],
+          "environment": {
+            "RAYON_NUM_THREADS": "4",
+            "NO_COLOR": "1",
+            "AVAROK_MTP_MAX_SEQS": "1",
+            "TOKIO_WORKER_THREADS": "4",
+            "XDG_CACHE_HOME": "/cache",
+            "OMP_NUM_THREADS": "4",
+            "RUST_LOG": "info",
+            "HF_HUB_OFFLINE": "1",
+            "HF_HOME": "/cache/huggingface",
+            "HOME": "/cache",
+            "CUDA_CACHE_PATH": "/cache/cuda"
+          },
+          "read_only": true,
+          "init": true,
+          "restart": "no",
+          "cap_drop": [
+            "ALL"
+          ],
+          "security_opt": [
+            "no-new-privileges:true"
+          ],
+          "stop_grace_period": "120s",
+          "shm_size": 67108864,
+          "mem_reservation": 57982058496,
+          "tmpfs": [
+            "/tmp:size=268435456,mode=1777"
+          ],
+          "volumes": [
+            {
+              "type": "bind",
+              "source": "${instance:model_root}",
+              "target": "/models/qwen36",
+              "read_only": true,
+              "bind": {
+                "create_host_path": false
+              }
+            },
+            {
+              "type": "bind",
+              "source": "${instance:cache_root}",
+              "target": "/cache",
+              "read_only": false,
+              "bind": {
+                "create_host_path": false
+              }
+            }
+          ],
+          "deploy": {
+            "resources": {
+              "reservations": {
+                "devices": [
+                  {
+                    "driver": "nvidia",
+                    "device_ids": [
+                      "0"
+                    ],
+                    "capabilities": [
+                      "gpu"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "healthcheck": {
+            "test": [
+              "CMD",
+              "/bin/bash",
+              "-ec",
+              "exec 3<>/dev/tcp/127.0.0.1/8888; printf 'GET /health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; IFS= read -r status <&3; [[ \"$$status\" == HTTP/*\" 200 \"* ]]"
+            ],
+            "interval": "30s",
+            "timeout": "5s",
+            "start_period": "480s",
+            "retries": 3
+          },
+          "logging": {
+            "driver": "json-file",
+            "options": {
+              "max-size": "20m",
+              "max-file": "3"
+            }
+          }
+        }
+      }
+    }
+  }
+}

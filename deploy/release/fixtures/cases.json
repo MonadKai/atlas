@@ -1,0 +1,27 @@
+{
+  "schema": "atlas-private-acceptance-v1",
+  "scope": "GB10 ARM64 Qwen3.6-35B-A3B-NVFP4 development; text OpenAI compatibility only",
+  "license": "AGPL-3.0-only; generated fixture text authored in this repository",
+  "context_limit": 32768,
+  "context_output_budget": 32,
+  "context_input_tolerance": 16,
+  "request_timeout_seconds": 180,
+  "cancel_recovery_seconds": 30,
+  "public": [
+    {"prompt": "Calculate 7 + 8. Reply with only the integer answer.", "answer": "15"},
+    {"prompt": "What is the capital of Japan? Reply with only the city name in English.", "answer": "Tokyo"},
+    {"prompt": "计算十二乘以十三，只回复阿拉伯数字结果，不要解释。", "answer": "156"}
+  ],
+  "context_markers": [173, 286, 491],
+  "filler_template": "Record {index}: Ada catalogued the northern observatory, while Ben reviewed coastal maps. A green parcel remained on the wooden shelf; no secret code was stored in this ordinary record.\n",
+  "cache_target_input": 8192,
+  "cache_codes": ["731", "492", "731"],
+  "cache_prefix": "This is a read-only lookup exercise. The immutable table has key ALPHA with value 731 and key BETA with value 492. Ignore unrelated catalog records.\n",
+  "tool": {
+    "prompt": "请查询北京当前天气，必须调用get_weather工具，不能猜测。",
+    "name": "get_weather",
+    "arguments": {"city": "北京"},
+    "definition": {"type": "function", "function": {"name": "get_weather", "description": "查询指定城市的当前天气，天气必须通过此工具获取。", "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}}
+  },
+  "qualifications": {"performance": "NOT_RUN", "stability": "NOT_RUN", "business_accuracy": "NOT_RUN", "production": "not_qualified", "ssm_internal_restore": "NOT_RUN"}
+}
