@@ -4,6 +4,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -127,6 +128,24 @@ class PrivatePackTests(unittest.TestCase):
         self.assertEqual(release["assets"][0]["distribution"], "not-included")
         self.assertEqual(capability["runtime"]["instance_schema_version"], "service-instance-v5")
         self.assertFalse(list(self.args.output.rglob("*.safetensors")))
+
+    def test_published_render_keeps_real_path_gate_without_source_checkout(self):
+        import instance
+        pack.pack(self.args)
+        model, cache = self.root/"model", self.root/"cache"
+        model.mkdir();cache.mkdir()
+        value = {"schema_version": "service-instance-v5", "release_scope": "development", "project_name": "published-test",
+            "container_name": "published-test", "host_ip": "127.0.0.1", "host_port": 18888, "manager": "test",
+            "binding_id": "published-test", "components": {"engine": {"cpuset": "0-3", "cpu_limit_millicores": 4000, "memory_limit_bytes": 68719476736}},
+            "uid": os.getuid(), "gid": os.getgid(), "model_root": str(model), "cache_root": str(cache), "model_alias": "qwen3-6-35b-a3b"}
+        self.assertEqual(instance.render(self.args.output, value)["services"]["engine"]["user"], f"{os.getuid()}:{os.getgid()}")
+        cache.chmod(0o500)
+        with self.assertRaisesRegex(ValueError, "cache must be writable"):
+            instance.render(self.args.output, value)
+        cache.chmod(0o700)
+        model.rmdir()
+        with self.assertRaisesRegex(ValueError, "existing real directory"):
+            instance.render(self.args.output, value)
 
     def test_dirty_head_wrong_tool_revision_and_foreign_origin_reject(self):
         original = (self.repo/"deploy/release/README.md").read_bytes()

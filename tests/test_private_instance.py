@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 """Pure rendering and ownership seams; no Docker or GPU lifecycle simulation."""
 import copy
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -10,6 +11,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 RELEASE = Path(__file__).resolve().parents[1] / "deploy/release"
 sys.path.insert(0, str(RELEASE))
@@ -73,6 +75,17 @@ class PrivateInstanceTests(unittest.TestCase):
         self.assertEqual(engine["labels"]["org.atlas.instance-sha256"], canonical(self.value))
         self.assertEqual(self.capability, original)
 
+    def test_render_contract_has_no_filesystem_or_process_identity_io(self):
+        value = {**self.value, "model_root": "/unavailable/model", "cache_root": "/unavailable/cache"}
+        with ExitStack() as stack:
+            for method in ["stat", "is_dir", "is_symlink", "exists", "resolve", "open", "read_bytes"]:
+                stack.enter_context(patch.object(Path, method, side_effect=AssertionError("pure renderer performed filesystem IO")))
+            for method in ["access", "geteuid", "getuid", "getgid", "stat", "lstat"]:
+                stack.enter_context(patch.object(os, method, side_effect=AssertionError("pure renderer observed host process or filesystem")))
+            stack.enter_context(patch("builtins.open", side_effect=AssertionError("pure renderer opened a file")))
+            desired = instance.render_contract(self.release, self.capability, value)
+        self.assertEqual(desired["services"]["engine"]["volumes"][0]["source"], value["model_root"])
+
     def test_gpu_deploy_reservation_derives_from_single_memory_budget(self):
         self.capability["runtime"]["compose"]["services"]["engine"]["mem_reservation"] = 60 * 1024**3
         engine = self.render()["services"]["engine"]
@@ -118,22 +131,44 @@ class PrivateInstanceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             instance.render_contract(self.release, self.capability, value)
 
-    def test_paths_are_existing_real_nonoverlapping_and_cache_owned_writable(self):
-        for patch in [{"cache_root": str(self.root / "absent")}, {"model_root": "relative"},
-                      {"cache_root": str(self.model)}, {"cache_root": str(self.model / "child")}]:
-            with self.subTest(patch=patch), self.assertRaises(ValueError):
-                instance.render_contract(self.release, self.capability, {**self.value, **patch})
+    def path_preflight(self, value):
+        instance.validate_instance(value, self.capability)
+        return instance.validate_path_observations(value, instance.observe_paths(value))
+
+    def test_path_boundary_preserves_existing_real_owned_writable_policy(self):
+        self.assertEqual(self.path_preflight(self.value)["paths"]["cache_root"]["owner_uid"], self.value["uid"])
+        for change in [{"cache_root": str(self.root / "absent")}, {"model_root": "relative"},
+                       {"cache_root": str(self.model)}, {"cache_root": str(self.model / "child")}]:
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.path_preflight({**self.value, **change})
         link = self.root / "link"
         link.symlink_to(self.cache, target_is_directory=True)
         with self.assertRaises(ValueError):
-            instance.render_contract(self.release, self.capability, {**self.value, "cache_root": str(link)})
+            self.path_preflight({**self.value, "cache_root": str(link)})
         self.cache.chmod(0o500)
         with self.assertRaises(ValueError):
-            self.render()
+            self.path_preflight(self.value)
         self.cache.chmod(0o700)
         with self.assertRaises(ValueError):
-            instance.render_contract(self.release, self.capability, {**self.value, "uid": os.getuid()+1})
+            self.path_preflight({**self.value, "uid": os.getuid()+1})
         self.assertFalse((self.root / "absent").exists())
+
+    def test_path_policy_is_pure_and_rejects_incomplete_or_mismatched_observations(self):
+        observation = instance.observe_paths(self.value)
+        with patch.object(Path, "stat", side_effect=AssertionError("policy performed IO")), patch.object(os, "access", side_effect=AssertionError("policy performed IO")):
+            self.assertEqual(instance.validate_path_observations(self.value, observation), observation)
+        for key, wrong in [("has_symlink", True), ("is_directory", False), ("owner_uid", self.value["uid"]+1),
+                           ("mode", 0), ("writable_by_effective_uid", False), ("path", "/different/cache")]:
+            changed = copy.deepcopy(observation)
+            changed["paths"]["cache_root"][key] = wrong
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                instance.validate_path_observations(self.value, changed)
+        wrong = copy.deepcopy(observation)
+        wrong["paths"].pop("model_root")
+        with self.assertRaises(ValueError):
+            instance.validate_path_observations(self.value, wrong)
+        with self.assertRaises(ValueError):
+            instance.validate_path_observations({**self.value, "binding_id": "different"}, observation)
 
     def test_guard_requires_complete_absence_or_matching_owned_objects(self):
         desired = self.render()

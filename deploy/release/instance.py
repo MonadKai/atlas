@@ -3,7 +3,7 @@
 import copy
 import hashlib
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import stat
 
@@ -31,12 +31,10 @@ def cpu_set(value):
     return selected
 
 
-def real_directory(value):
+def lexical_directory(value):
     require(isinstance(value, str) and value and "\x00" not in value, "explicit directory path required")
-    path = Path(value)
-    require(path.is_absolute() and ".." not in path.parts and path.is_dir(), "existing absolute directory required")
-    require(not any(part.is_symlink() for part in [path, *path.parents]), "directory symlink refused")
-    require(str(path) == value, "canonical directory path required")
+    path = PurePosixPath(value)
+    require(path.is_absolute() and not value.startswith("//") and ".." not in path.parts and str(path) == value, "canonical absolute directory path required")
     return path
 
 
@@ -59,13 +57,46 @@ def validate_instance(value, capability):
     for field in ("cpu_limit_millicores", "memory_limit_bytes"):
         require(positive(limits[field]) and limits[field] >= floor[field], "component resource floor violated")
     require(limits["cpu_limit_millicores"] <= len(cpus)*1000, "CPU quota exceeds bound CPU set")
-    model, cache = real_directory(value["model_root"]), real_directory(value["cache_root"])
+    model, cache = lexical_directory(value["model_root"]), lexical_directory(value["cache_root"])
     require(not model.is_relative_to(cache) and not cache.is_relative_to(model), "model/cache roots overlap")
-    identity = cache.stat()
-    require(identity.st_uid == value["uid"] and identity.st_mode & stat.S_IWUSR and identity.st_mode & stat.S_IXUSR, "cache must be writable and owned by declared UID")
-    if value["uid"] == os.geteuid():
-        require(os.access(cache, os.W_OK | os.X_OK), "cache is not writable by runtime UID")
     return value
+
+
+def observe_paths(value):
+    """Read-only host I/O boundary; observations are not caller-supplied authority."""
+    effective_uid = os.geteuid()
+    paths = {}
+    for field in ("model_root", "cache_root"):
+        path = Path(str(lexical_directory(value[field])))
+        is_directory = path.is_dir()
+        identity = path.stat() if is_directory else None
+        paths[field] = {"path": value[field], "is_directory": is_directory,
+            "has_symlink": any(part.is_symlink() for part in [path, *path.parents]),
+            "owner_uid": identity.st_uid if identity else None, "mode": identity.st_mode if identity else None,
+            "writable_by_effective_uid": os.access(path, os.W_OK | os.X_OK)
+                if field == "cache_root" and effective_uid == value["uid"] else None}
+    return {"schema_version": "atlas-instance-path-observation-v1", "instance_sha256": canonical(value),
+            "effective_uid": effective_uid, "paths": paths}
+
+
+def validate_path_observations(value, observation):
+    """Pure path-policy decision; published entrypoints collect fresh observations."""
+    require(isinstance(observation, dict) and observation.get("schema_version") == "atlas-instance-path-observation-v1"
+            and observation.get("instance_sha256") == canonical(value), "path observations must bind the exact instance")
+    paths = observation.get("paths", {})
+    require(isinstance(paths, dict) and set(paths) == {"model_root", "cache_root"}, "complete path observations required")
+    for field, item in paths.items():
+        require(isinstance(item, dict) and item.get("path") == value[field] and item.get("is_directory") is True
+                and item.get("has_symlink") is False, "existing real directory required: " + field)
+    cache = paths["cache_root"]
+    mode = cache.get("mode")
+    require(cache.get("owner_uid") == value["uid"] and type(mode) is int and mode & stat.S_IWUSR and mode & stat.S_IXUSR,
+            "cache must be writable and owned by declared UID")
+    effective_uid = observation.get("effective_uid")
+    require(type(effective_uid) is int and effective_uid >= 0, "path observer effective UID required")
+    if value["uid"] == effective_uid:
+        require(cache.get("writable_by_effective_uid") is True, "cache is not writable by runtime UID")
+    return observation
 
 
 def labels(value):
@@ -86,7 +117,7 @@ def substitute(value, replacements):
 
 
 def render_contract(release, capability, value):
-    """Publisher declaration API; consumer entrypoint is bundle-validated render()."""
+    """Pure publisher declaration API; does not observe host paths or resources."""
     validate_instance(value, capability)
     require(len(release["components"]) == 1 and release["components"][0]["id"] == "engine", "runtime component mismatch")
     image = release["components"][0]["image_ref"]
@@ -113,6 +144,8 @@ def render_contract(release, capability, value):
 
 def render(root, value):
     release, capability, _ = validate_bundle(root)
+    validate_instance(value, capability)
+    validate_path_observations(value, observe_paths(value))
     return render_contract(release, capability, value)
 
 

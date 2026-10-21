@@ -203,9 +203,16 @@ runtime Dockerfile, with explicit source/version/binary-SHA build arguments. Inp
 pinning, build success, runtime success and byte reproducibility are separate claims.
 
 Before private publication, `instance.render_contract` is the source-owned public
-pure declaration API for a local development probe; it does not grant published
-artifact qualification. Published consumption uses `toolkit.py render`, which first
-validates the approved closed bundle. Record an actual local model probe and image
+pure declaration API for a local development probe; it validates lexical paths and
+instance fields without observing the filesystem or host process identity. A
+publisher must separately obtain fresh `instance.observe_paths` observations and
+apply `instance.validate_path_observations` before creating a probe. Existing real
+model/cache directories, absence of symlinks, cache ownership and write access
+remain mandatory. The pure declaration grants neither admission nor published
+artifact qualification. Published consumption uses `toolkit.py render`, whose
+boundary validates the approved closed bundle and collects/checks those path
+observations; `verify-assets` and runtime verification retain that boundary gate.
+Record an actual local model probe and image
 identity before artifact approval. `image.py publish` is a single-artifact private
 push/readback/digest-pull operation, never deployment; it rejects tag replacement and
 keeps remote manifest digest distinct from config ID. It can publish runtime or
