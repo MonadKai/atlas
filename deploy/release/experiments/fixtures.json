@@ -1,0 +1,29 @@
+{
+  "schema_version": "atlas-request-fixtures-v1",
+  "license": "AGPL-3.0-only; synthetic task-authored material; no private customer audio or text",
+  "short": {
+    "prompt": "这是电话语音助理回复测试。用户说：请帮我确认明天下午三点的预约。你必须只回复这一句话，不添加其他文字：好的，已为您确认明天下午三点的预约。",
+    "answer": "好的，已为您确认明天下午三点的预约。"
+  },
+  "mixed_short": {
+    "prompt": "这是电话语音助理回复测试。用户说：谢谢。请只回复：不客气，还有其他需要吗？",
+    "answer": "不客气，还有其他需要吗？"
+  },
+  "filler_template": "Record {index}: neutral reference material for a synthetic voice agent context experiment.\n",
+  "markers": [173, 286, 491],
+  "cache_codes": {"ALPHA": 731, "BETA": 492},
+  "cancel_prompt": "Write a detailed numbered list of the integers from 1 through 300, one per line.",
+  "tool": {
+    "prompt": "请调用 get_weather 查询北京今天的天气，不要直接回答天气。",
+    "name": "get_weather",
+    "arguments": {"city": "北京"},
+    "definition": {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "查询指定城市今天的天气。",
+        "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"], "additionalProperties": false}
+      }
+    }
+  }
+}

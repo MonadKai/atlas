@@ -91,6 +91,43 @@ termination, representative expected content, cancellation and follow-up recover
 Only test optional capabilities that are already part of the promised service.
 The fixture and scorer determine verdicts; do not loosen them after failure.
 
+## Recovery reliability and bounded experiments
+
+For a bundle declaring `atlas-reliability-tools-v1`, read the packaged
+inspection guide and experiment method in `deploy/release/inspection/README.md`
+and `deploy/release/experiments/README.md` in a source checkout; in an extracted
+bundle these are `inspection/README.md` and `experiments/README.md`. Do not assume older bundles contain the extension.
+Freeze plans, fixtures, thresholds and exact runtime identity before requests;
+record original-resident and newly built images separately.
+
+Before a stop or cleanup, verify actual required mount sources, resolved paths,
+symlink policy and every required file identity. Inspect strings alone are not
+recovery evidence. `inspection assets`, `mounts` and `cleanup-references` only
+observe and judge; a refused or uncertain reference is never deletion permission.
+Include stopped recovery containers and externally declared model/cache/assets.
+A prior failure with an unknown owner remains unknown after a successful retry.
+
+The default resource observer creates no CUDA context. Linux MemAvailable,
+MemFree, Cached, cgroup/RSS, NVML, the driver leg and Atlas's allocator are distinct
+observations. Any explicit context-dependent driver probe needs separate capacity
+admission and records its context overhead; it does not reveal a historical failure.
+Never flush shared cache or manufacture OOM to simplify an experiment.
+
+Use the publisher's request-only measurement tools with fixed public fixtures.
+Shared-prefix hits require usage evidence plus correct distinct suffix answers;
+long-prefill misses require unique prefixes and actual counts. Exact tokenizer
+input plus output allowance must fit the configured context. Caller dispatch and
+server queue are different boundaries; absent server instrumentation stays
+unavailable. SSE chunk intervals are not exact token intervals. Report failed
+requests and percentile sample counts, with small-sample tail limits.
+
+Service operations remain individual agent decisions with saved recovery inputs.
+Do not add a lifecycle controller or put a stop/deploy/wait/restore script in a
+run directory. Load generation can run for an explicit finite duration while the
+agent monitors service health and impact. A two-hour experiment is neither
+long-term stability nor production qualification; permanent resident replacement
+requires its own justified decision after recovery.
+
 ## Exit, recreate and recover
 
 Agent operations remain separate: observe/drain requests, stop, inspect exit and

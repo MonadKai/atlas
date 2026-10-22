@@ -13,6 +13,27 @@ DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 IMAGE = re.compile(r"registry\.100credit\.cn/[^@\s]+@sha256:[0-9a-f]{64}\Z")
 
 
+RELIABILITY_MEMBERS = frozenset({
+    "inspection/__init__.py", "inspection/__main__.py", "inspection/paths.py",
+    "inspection/resources.py", "inspection/cuda_memory.py", "inspection/README.md",
+    "experiments/__init__.py", "experiments/cli.py", "experiments/model.py",
+    "experiments/plans.py", "experiments/router.py", "experiments/workload.py",
+    "experiments/fixtures.json", "experiments/README.md", "experiments/coload.py",
+})
+
+
+def validate_tool_sets(release, members):
+    """Optional explicit extension; old v4 deliveries have no declaration."""
+    if "tool_sets" not in release:
+        return
+    declarations = release["tool_sets"]
+    require(isinstance(declarations, list) and declarations
+            and all(isinstance(item, str) for item in declarations)
+            and len(set(declarations)) == len(declarations), "explicit unique toolkit sets required")
+    require(set(declarations) == {"atlas-reliability-tools-v1"}, "unsupported toolkit set")
+    require(RELIABILITY_MEMBERS <= set(members), "declared reliability tool closure incomplete")
+
+
 def require(condition, message):
     if not condition:
         raise ValueError(message)
@@ -183,6 +204,7 @@ def validate_bundle(root):
     manifest = load(root / "bundle-manifest.json")
     required = {"toolkit.py", "verify.py", "release_contract.py", "instance.py", "assets.py", "acceptance.py", "acceptance_cases.py", "acceptance_http.py", "acceptance_suites.py", "acceptance_profile.py", "fixtures/cases.json", "models/qwen36-nvfp4.json", "runtime_identity.py", "observe_shutdown.py", "qualification.json", "product-capability.json", "README.md", "LICENSE", "skills/atlas-private-deploy/SKILL.md", "skills/avarok-release/references/private-gb10.md"}
     require(isinstance(manifest, dict) and required <= set(manifest), "required bundle member missing")
+    validate_tool_sets(release, manifest)
     actual = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file() or p.is_symlink()}
     require(actual == set(manifest) | {"release.json", "bundle-manifest.json"}, "unmanifested or missing bundle member")
     for name, expected in manifest.items():

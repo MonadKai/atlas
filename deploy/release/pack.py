@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 import subprocess
 import sys
 
-from release_contract import COMMIT, DIGEST, IMAGE, PRODUCT, PROFILE, SOURCE_REPOSITORY
+from release_contract import COMMIT, DIGEST, IMAGE, PRODUCT, PROFILE, SOURCE_REPOSITORY, RELIABILITY_MEMBERS
 from release_contract import canonical, require, sha, unique_object, validate_bundle
 
 MODULES = ["release_contract", "toolkit", "verify", "instance", "assets", "runtime_identity",
@@ -29,6 +29,7 @@ SOURCE_FILES.update({
     "skills/avarok-release/references/private-gb10.md": ".claude/skills/avarok-release/references/private-gb10.md",
 })
 
+SOURCE_FILES.update({name: "deploy/release/" + name for name in sorted(RELIABILITY_MEMBERS)})
 
 def git(source, *args):
     return subprocess.check_output(["git", "-C", str(source), *args], stderr=subprocess.PIPE)
@@ -176,6 +177,7 @@ def pack(args):
     write_json(output / "qualification.json", qualification)
     release = {"schema_version": "product-release-v4", "product_ref": PRODUCT, "release_ref": args.release_ref,
         "service_version": args.service_version, "source_revision": args.source_revision, "tool_revision": args.tool_revision,
+        "tool_sets": ["atlas-reliability-tools-v1"],
         "capability_source": SOURCE_FILES["product-capability.json"], "capability_source_revision": args.tool_revision,
         "capability_sha256": canonical(capability), "licenses_sha256": sha(output / "LICENSE"), "tools": tools,
         "distribution": {"status": "approved", "approval_ref": "operator-authorized-private-development:"+args.release_ref},

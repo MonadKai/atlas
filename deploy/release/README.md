@@ -21,7 +21,9 @@ not authenticate an arbitrary publisher. Pull the pinned data image, create an
 to a new physical directory, then remove that extraction container. No model bytes
 are distributed in this bundle. Do not install a skill from a source checkout or a
 symlink. All consumer commands below use only that directory, local model files and
-site parameters, with Python3.11+ standard library and Docker/Compose. No pip install,
+site parameters, with Python3.11+ standard library and Docker/Compose for Atlas operations. The
+optional external co-load adapter requires its explicitly selected publisher-client
+environment (see `experiments/README.md`); it never installs packages. No pip install,
 Atlas checkout, other service repo or company infrastructure checkout is needed.
 
 Before executing any extracted Python file, independently check the locator's two
@@ -231,3 +233,21 @@ build, publish, deploy from artifacts or verify Atlas. Keep original failures,
 NOT_RUN scopes and old qualifiers; never promote local byte consistency to cloud
 provenance authentication. Cloud object identities and upstream-cloud-local source
 chain remain NOT_VERIFIED_THIS_ROUND in this release.
+
+## Atomic recovery inspection and voice-agent experiments
+
+New bundles explicitly declaring `atlas-reliability-tools-v1` additionally ship
+[read-only inspection](inspection/README.md) and
+[bounded request measurement](experiments/README.md). Their schemas, commands,
+frozen experimental targets and limits live in those guides. Older v4 bundles
+without the declaration retain their original closure and remain supported.
+The extension changes tools, not the runtime image, model, inference backend,
+public protocol or production qualification. Obtain a new immutable tool bundle
+when the tools change; do not modify an already published extraction in place.
+
+These clients do not stop, start, replace, wait for or repair a service. Agents
+use separate standard platform operations, preserve original recovery identities,
+and label observations per actual image/config/parameters. Bind paths must exist
+and match their manifests before a stop, even if Docker still shows a healthy
+process using now-unlinked files. Cleanup references include both lexical and
+resolved ancestor/descendant relationships and stopped recovery instances.
