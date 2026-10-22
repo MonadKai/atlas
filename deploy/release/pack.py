@@ -22,6 +22,7 @@ SOURCE_FILES = {name+".py": "deploy/release/"+name+".py" for name in MODULES}
 SOURCE_FILES.update({
     "build_profile.json": "deploy/release/build_profile.json",
     "fixtures/cases.json": "deploy/release/fixtures/cases.json",
+    "fixtures/drain-prose.txt": "deploy/release/fixtures/drain-prose.txt",
     "models/qwen36-nvfp4.json": "deploy/release/models/qwen36-nvfp4.json",
     "product-capability.json": "deploy/release/profiles/gb10-qwen36-nvfp4.json",
     "README.md": "deploy/release/README.md", "LICENSE": "LICENSE",

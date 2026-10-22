@@ -138,3 +138,19 @@ synchronous source-version-matched startup logs alongside these observations.
 Successful later recovery does not identify an earlier deletion actor, cache owner,
 OOM cause or exact transient memory condition. Never use global drop_caches, sysctl
 changes, deliberate OOM or shared-cache deletion to obtain a favorable result.
+
+
+## Active-request drain fixture
+
+The request-only `observe_shutdown.py` accepts an explicit `--prompt-file`. Use the
+shipped `fixtures/drain-prose.txt` for a varied prose request when a repetitive
+integer sequence finishes early under the existing content-loop watchdog. The file
+is a bounded regular UTF-8 input (at most 16384 bytes), with no symlinks in the path;
+its actual size/SHA-256 is recorded in `observation.prompt_identity`; the readiness
+notice binds `prompt_sha256`. The old
+default remains compatible, and the existing `--max-tokens` range stays 1..512.
+Do not disable the watchdog or enlarge this bound to manufacture an active request.
+The prose requests roughly one thousand Chinese characters to keep useful work in
+flight, but its acceptance checks drain/framing, not article length or accuracy.
+The agent must independently observe an active request before separately issuing a
+standard signal; a ready-file alone does not prove the request is still running.
