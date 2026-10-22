@@ -50,6 +50,7 @@ def parse_metrics(text):
 
 def resource_summary(raw):
     return {"linux": raw["linux_meminfo"], "containers": raw["containers"], "nvml_report": raw["nvidia_smi"],
+            "nvml_compute_process_report": raw.get("nvidia_smi_compute_apps", {"status": "NOT_OBSERVED", "reason": "not collected in this older observation"}),
             "cuda_driver_memory": {"status": "NOT_OBSERVED", "reason": "cuMemGetInfo is context-dependent; this default observer does not create a CUDA context"},
             "atlas_allocator": {"status": "NOT_OBSERVED", "reason": "requires separately timestamped Atlas allocator/log evidence; co-tenant/page-cache residual is not Linux Cached"},
             "interpretation": "Linux available/free/cache, cgroup accounting, process RSS, NVML and Atlas allocation abstractions are distinct; do not subtract them to invent causal attribution"}
@@ -141,7 +142,8 @@ def observe_resources(container_ids, router, metrics_url):
            "linux_loadavg": router.read("/proc/loadavg"), "pressure": {kind: router.optional("/proc/pressure/" + kind) for kind in ("cpu", "memory", "io")},
            "containers": [router.container(identifier) for identifier in container_ids],
            "atlas_metrics": router.metrics(metrics_url) if metrics_url is not None else {"status": "NOT_REQUESTED"},
-           "nvidia_smi": router.command(["nvidia-smi", "--query-gpu=index,uuid,name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits"])}
+           "nvidia_smi": router.command(["nvidia-smi", "--query-gpu=index,uuid,name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits"]),
+           "nvidia_smi_compute_apps": router.command(["nvidia-smi", "--query-compute-apps=pid,gpu_uuid,process_name,used_gpu_memory", "--format=csv,noheader,nounits"])}
     return {"schema_version": "atlas-resource-observation-v1", "started_at": started, "ended_at": datetime.now(timezone.utc).isoformat(),
             "collection_seconds": time.monotonic() - monotonic, "summary": resource_summary(raw), "raw": raw,
-            "scope": "single sequential read-only snapshot; fields collected within stated interval, not exactly simultaneous; no CUDA context, no cache flush, no lifecycle operations"}
+            "scope": "single sequential read-only snapshot; fields collected within stated interval, not exactly simultaneous; NVML compute-process table is independent raw data, not summed shared UMA or a CUDA allocation ledger; no CUDA context, no cache flush, no lifecycle operations"}

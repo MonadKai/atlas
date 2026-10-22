@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy/release"))
 from inspection.paths import IORouter, assess_assets, assess_cleanup, assess_mounts, container_references, observe_plan, observe_references
-from inspection.resources import parse_meminfo, parse_key_values, parse_metrics, resource_summary
+from inspection.resources import ResourceIORouter, observe_resources, parse_meminfo, parse_key_values, parse_metrics, resource_summary
 from inspection.cuda_memory import MINIMUM_AVAILABLE, validate_request
 
 
@@ -172,6 +172,29 @@ class PathTests(unittest.TestCase):
 
 
 class ResourceTests(unittest.TestCase):
+    def test_separate_nvml_compute_process_query_and_unavailable_status(self):
+        class ReadOnlyBoundary:
+            def __init__(self): self.calls = []
+            def read(self, path):
+                return "Cached: 1 kB\n" if path == "/proc/meminfo" else "counter 0\n"
+            def optional(self, path): return {"status": "UNAVAILABLE", "reason": "fixture"}
+            def command(self, argv):
+                self.calls.append(argv)
+                return {"status": "UNAVAILABLE", "reason": "diagnostic fixture: permission unavailable"}
+        boundary = ReadOnlyBoundary()
+        observed = observe_resources([], boundary, None)
+        self.assertEqual(len(boundary.calls), 2)
+        self.assertEqual(boundary.calls[1], ["nvidia-smi", "--query-compute-apps=pid,gpu_uuid,process_name,used_gpu_memory", "--format=csv,noheader,nounits"])
+        self.assertEqual(observed["raw"]["nvidia_smi_compute_apps"]["status"], "UNAVAILABLE")
+        self.assertEqual(observed["summary"]["cuda_driver_memory"]["status"], "NOT_OBSERVED")
+        self.assertNotIn("cuda_driver_free_bytes", observed)
+
+    def test_failed_read_only_command_does_not_invent_memory_values(self):
+        evidence = ResourceIORouter().command(["/nonexistent-atlas-diagnostic-program"])
+        self.assertEqual(evidence["status"], "UNAVAILABLE")
+        self.assertEqual(evidence["reason"], "FileNotFoundError")
+        self.assertNotIn("stdout", evidence)
+
     def test_cuda_probe_requires_ack_floor_device_and_bounded_timeout(self):
         validate_request(0, 10, MINIMUM_AVAILABLE, True)
         for arguments in ((0, 10, MINIMUM_AVAILABLE, False), (-1, 10, MINIMUM_AVAILABLE, True),

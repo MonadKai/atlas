@@ -113,10 +113,29 @@ This explicit identity-bound sample schema supersedes unbound draft samples;
 derive it from saved actual observations rather than filling missing identities
 with guesses:
 
+Use the publisher normalizer on the saved inspection JSONL before judging. Selection
+is explicit: one full container ID, one exact Linux `comm`, and a named actual
+`memory.events` counter. It selects the sole matching process's `VmRSS`, not init
+RSS or a sum of shared pages. Missing observations, duplicate matching processes,
+identity/PID drift, reset counters or a missing active-request gauge fail closed.
+The normalizer preserves actual UTC collection windows, reports elapsed time from
+the first sample start and binds both each raw row and the complete input snapshot
+by SHA. It performs no network call, sampling, service operation or trend verdict.
+
 ```bash
+python3 -B -E -s experiments/cli.py normalize-resources \
+  --raw-observations INSPECTION_RESOURCES.jsonl --container-id FULL_CONTAINER_ID \
+  --process-comm spark --oom-counter oom_kill --output RESOURCE_SAMPLES.json
 python3 -B -E -s experiments/cli.py resource-trend --plan SOAK_PLAN.json \
   --samples RESOURCE_SAMPLES.json --output TREND.json
 ```
+
+The selected counter `oom_kill` measures kills, while `oom` measures cgroup OOM
+events; choose explicitly and keep that meaning in the report. A normalized partial
+run is only valid input transformation, not a two-hour PASS. Use an immutable,
+complete newline-terminated JSONL snapshot; an incomplete final write is rejected.
+NVML GPU/process tables remain auxiliary raw observations and do not change the
+frozen RSS/cgroup trend thresholds or establish a CUDA allocation ledger.
 
 The example freezes600s warmup, first/last900s medians, a2GiB median-growth target
 and a1GiB/hour post-warmup OLS slope target. Missing windows/counters fail closed.
@@ -238,3 +257,60 @@ prove GPU execution. A running container is insufficient. Keep private business
 client exemptions and original/resident versus new-image qualification scopes
 explicit. No stop, start, replacement, readiness loop or recovery operation is
 part of this co-load runner.
+
+## GB10 Qwen3.6 case study: observations and unresolved hypotheses
+
+The 2026-10-22 experiment compared the original `d8229456` runtime and the
+previously built `963f71b9` runtime, each with the same hash-bound Qwen3.6-35B-A3B
+NVFP4 local asset set, 32768 context, BF16 KV, prefix caching, fast MoE layout,
+4096 maximum prefill tokens and no TurboQuant. The release manifest binds full
+source, image/config, native and model identities. Site-specific configuration,
+maintenance windows, frozen inputs, raw evidence and qualifications are recorded
+in `xd-infra/host/dgx-spark-1/atlas-reliability-20261022/`; this method is not a
+second current deployment registry. Local SHA consistency does not authenticate
+the upstream-to-cloud-to-host provenance chain, which was not verified.
+
+The question was whether sequential recoveries and realistic mixed request load
+exposed a reproducible availability or latency limitation. Three process-cold
+new-runtime recreations used retained filesystem/JIT caches without dropping
+shared caches. Every recreation passed actual inference, SSE and prefix A/B/A
+isolation; the original runtime was restored separately. No changed algorithm,
+backend, memory threshold or context length was used to obtain those results.
+
+Each frozen 130-request performance run produced 115 normal completions and
+15 expected interruptions/errors, with no failed normal completion. Short-reply
+TTFT p95 was about 0.37s. Five near32K requests per runtime had TTFT p95 about
+14s. However, all five long-prefill/short-reply pairs per runtime violated the
+frozen mixed-short TTFT 5s and E2E 8s targets: p95 was approximately 14.3–14.5s.
+The performance experiment therefore remains **FAIL**. Actual ASR, BR balanced
+and TEN VAD publisher requests overlapped the Atlas request windows. The BR
+profile does not establish Triton computation.
+
+Short mixed requests began while their long partner was in flight and produced
+first content after that partner completed. This supports a head-of-line or
+shared-scheduler contention hypothesis; internal queue timestamps were unavailable
+and the exact cause remains unproven. The original and new runs differed in CPU
+limits, tracing, host time and cache history. Their small latency differences
+are not a controlled engine speed comparison. Per-scenario sample counts below
+100 do not qualify p99 or business accuracy.
+
+An integer-count shutdown fixture ended early under the existing content-loop
+watchdog. Changing the bounded request fixture to prose, while retaining the
+existing 512-token maximum and leaving the engine unchanged, allowed an actual
+active-request SIGTERM/drain observation on the original runtime. Two earlier
+observation timing misses remain NOT_ESTABLISHED. The request fixture, server
+active gauge, signal time, client completion, drain log, exit status and subsequent
+real recovery must all be retained before asserting graceful active drain.
+
+Historical BR asset disappearance has no established actor or exact time.
+Historical Atlas startup memory rejection, CUDA initialization error and missing
+assets are separate observations; page-cache residuals and later free memory do
+not establish their causes. The preventive response is read-only hash/mount/path
+reference checks before lifecycle actions and synchronous resource evidence at
+failure, rather than an invented causal narrative.
+
+The separately frozen two-hour workload and resource oracle measure only the
+recorded runtime, duration and actual co-load. A successful original-runtime soak
+cannot qualify the new runtime or establish long-term stability, production
+readiness or a business SLO. Consult the immutable site experiment receipt for
+the completed duration, all failures and the final bounded verdict.

@@ -236,7 +236,8 @@ chain remain NOT_VERIFIED_THIS_ROUND in this release.
 
 ## Atomic recovery inspection and voice-agent experiments
 
-New bundles explicitly declaring `atlas-reliability-tools-v1` additionally ship
+Bundles explicitly declaring `atlas-reliability-tools-v1` or
+`atlas-reliability-tools-v2` additionally ship
 [read-only inspection](inspection/README.md) and
 [bounded request measurement](experiments/README.md). Their schemas, commands,
 frozen experimental targets and limits live in those guides. Older v4 bundles
@@ -251,3 +252,9 @@ and label observations per actual image/config/parameters. Bind paths must exist
 and match their manifests before a stop, even if Docker still shows a healthy
 process using now-unlinked files. Cleanup references include both lexical and
 resolved ancestor/descendant relationships and stopped recovery instances.
+
+The v2 tool set adds `experiments/resources.py`, required by its normalization
+CLI. The v1 tool closure remains unchanged and does not retroactively require
+this module. Consumers validate the tool set declared by their exact bundle;
+removing a required v2 module fails before execution. Normalization checks raw
+identity and accounting, while the separately frozen trend oracle decides scope.

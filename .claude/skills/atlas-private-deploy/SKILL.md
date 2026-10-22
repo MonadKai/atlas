@@ -93,7 +93,8 @@ The fixture and scorer determine verdicts; do not loosen them after failure.
 
 ## Recovery reliability and bounded experiments
 
-For a bundle declaring `atlas-reliability-tools-v1`, read the packaged
+For a bundle declaring `atlas-reliability-tools-v1` or
+`atlas-reliability-tools-v2`, read the packaged
 inspection guide and experiment method in `deploy/release/inspection/README.md`
 and `deploy/release/experiments/README.md` in a source checkout; in an extracted
 bundle these are `inspection/README.md` and `experiments/README.md`. Do not assume older bundles contain the extension.

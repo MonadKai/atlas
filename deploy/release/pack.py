@@ -178,7 +178,7 @@ def pack(args):
     write_json(output / "qualification.json", qualification)
     release = {"schema_version": "product-release-v4", "product_ref": PRODUCT, "release_ref": args.release_ref,
         "service_version": args.service_version, "source_revision": args.source_revision, "tool_revision": args.tool_revision,
-        "tool_sets": ["atlas-reliability-tools-v1"],
+        "tool_sets": ["atlas-reliability-tools-v2"],
         "capability_source": SOURCE_FILES["product-capability.json"], "capability_source_revision": args.tool_revision,
         "capability_sha256": canonical(capability), "licenses_sha256": sha(output / "LICENSE"), "tools": tools,
         "distribution": {"status": "approved", "approval_ref": "operator-authorized-private-development:"+args.release_ref},

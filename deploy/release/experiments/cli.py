@@ -14,6 +14,7 @@ from experiments.model import canonical_sha256, resource_trend, summarize, valid
 from experiments.plans import example_plan
 from experiments.router import IORouter
 from experiments.workload import execute, prepare
+from experiments.resources import normalize
 
 
 def main():
@@ -39,6 +40,12 @@ def main():
     trend.add_argument("--plan", type=Path, required=True)
     trend.add_argument("--samples", type=Path, required=True)
     trend.add_argument("--output", type=Path, required=True)
+    normalizer = subs.add_parser("normalize-resources")
+    normalizer.add_argument("--raw-observations", type=Path, required=True)
+    normalizer.add_argument("--container-id", required=True)
+    normalizer.add_argument("--process-comm", required=True)
+    normalizer.add_argument("--oom-counter", choices=("oom", "oom_kill", "oom_group_kill"), required=True)
+    normalizer.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output already exists; retain the previous attempt and choose a new path")
@@ -101,6 +108,17 @@ def main():
                 (root / "request.json").read_bytes(), (root / "response.sse-or-json").read_bytes())
         result = summarize(plan, rows, meta["elapsed_seconds"])
         IORouter.write_json(args.output, result)
+    elif args.command == "normalize-resources":
+        raw_rows, source_sha = IORouter.read_observation_lines(args.raw_observations)
+        rows = normalize(raw_rows, args.container_id, args.process_comm, args.oom_counter)
+        for row in rows:
+            row["raw_observations_file_sha256"] = source_sha
+        IORouter.write_json(args.output, rows)
+        result = {"status": "NORMALIZED", "sample_count": len(rows),
+            "elapsed_seconds": rows[-1]["elapsed_seconds"], "container_id": args.container_id,
+            "process_comm": args.process_comm, "oom_counter": args.oom_counter,
+            "raw_observations_file_sha256": source_sha,
+            "scope": "identity-bound resource input transformation only; no duration, growth or stability verdict"}
     else:
         result = resource_trend(IORouter.read_json(args.samples), IORouter.read_json(args.plan))
         IORouter.write_json(args.output, result)

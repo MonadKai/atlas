@@ -13,7 +13,7 @@ DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 IMAGE = re.compile(r"registry\.100credit\.cn/[^@\s]+@sha256:[0-9a-f]{64}\Z")
 
 
-RELIABILITY_MEMBERS = frozenset({
+RELIABILITY_MEMBERS_V1 = frozenset({
     "inspection/__init__.py", "inspection/__main__.py", "inspection/paths.py",
     "inspection/resources.py", "inspection/cuda_memory.py", "inspection/README.md",
     "experiments/__init__.py", "experiments/cli.py", "experiments/model.py",
@@ -21,6 +21,8 @@ RELIABILITY_MEMBERS = frozenset({
     "experiments/fixtures.json", "experiments/README.md", "experiments/coload.py",
 })
 
+
+RELIABILITY_MEMBERS = RELIABILITY_MEMBERS_V1 | {"experiments/resources.py"}
 
 def validate_tool_sets(release, members):
     """Optional explicit extension; old v4 deliveries have no declaration."""
@@ -30,8 +32,10 @@ def validate_tool_sets(release, members):
     require(isinstance(declarations, list) and declarations
             and all(isinstance(item, str) for item in declarations)
             and len(set(declarations)) == len(declarations), "explicit unique toolkit sets required")
-    require(set(declarations) == {"atlas-reliability-tools-v1"}, "unsupported toolkit set")
-    require(RELIABILITY_MEMBERS <= set(members), "declared reliability tool closure incomplete")
+    supported = {"atlas-reliability-tools-v1": RELIABILITY_MEMBERS_V1,
+                 "atlas-reliability-tools-v2": RELIABILITY_MEMBERS}
+    require(len(declarations) == 1 and declarations[0] in supported, "unsupported toolkit set")
+    require(supported[declarations[0]] <= set(members), "declared reliability tool closure incomplete")
 
 
 def require(condition, message):

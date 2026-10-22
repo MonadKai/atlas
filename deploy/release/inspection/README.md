@@ -99,7 +99,12 @@ are separate; their shared pages are not summed. cgroup memory.current/stat, swa
 max/high/peak, OOM event counters, CPU, PSI and actual Docker `RestartCount` remain
 separate. A race with process exit is unavailable evidence, never zero usage.
 Linux `MemAvailable`, `MemFree` and `Cached` keep their original names and meanings.
-`nvidia-smi` reports are labeled NVML; UMA may report N/A. No CUDA context is created
+`nvidia-smi` GPU-level and compute-process reports are separately labeled NVML.
+On GB10 UMA the GPU-level memory fields may be N/A while the process table reports
+`used_gpu_memory`. The process table keeps its raw rows/status, with no sum of
+potentially shared UMA and no conversion into an Atlas or CUDA allocation ledger.
+A later added process observer starts at its actual observation time; do not
+backfill earlier samples with a later value. No CUDA context is created
 by this observer, and no Atlas allocator amount is inferred from system totals.
 
 The optional metrics GET has a 2s timeout, bounded body and numeric allowlist. It

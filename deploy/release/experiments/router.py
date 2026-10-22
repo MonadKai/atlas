@@ -42,6 +42,15 @@ class IORouter:
         return json.loads(Path(path).read_text(), object_pairs_hook=unique, parse_constant=invalid_constant)
 
     @staticmethod
+    def read_observation_lines(path):
+        """Snapshot file input only; never opens a network endpoint."""
+        from .resources import parse_observations
+        with Path(path).open("rb") as stream:
+            raw = stream.read(256 * 1024 * 1024 + 1)
+        require(len(raw) <= 256 * 1024 * 1024, "raw observation file exceeds 256MiB bound")
+        return parse_observations(raw.decode("utf-8")), "sha256:" + hashlib.sha256(raw).hexdigest()
+
+    @staticmethod
     def write_json(path, value):
         Path(path).write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
 
